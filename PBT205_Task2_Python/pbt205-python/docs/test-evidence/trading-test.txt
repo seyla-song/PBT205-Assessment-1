@@ -1,0 +1,48 @@
+# C4 Trading integration test: sendOrder -> exchange -> trades
+# Run at 2026-10-19T09:32:53.180Z  endpoint=5672
+# Broker: RabbitMQ
+
+$ exchange: python task2-trading/exchange.py 5672
+[exchange] Exchange running. Subscribed to "orders", publishing to "trades".
+PASS - exchange started
+$ alice: python task2-trading/send_order.py alice 5672 BUY 100 10.50
+[alice] Sent BUY 100 XYZ @ 10.5 as alice
+[exchange] ORDER  alice BUY 100 XYZ @ 10.5
+[exchange] BOOK   XYZ {"bids":["alice@10.5"],"asks":[]}
+PASS - sendOrder exits immediately after sending (alice BUY 100 @ 10.50)
+PASS - unmatched BUY rests in the order book
+PASS - no trade yet
+$ bob: python task2-trading/send_order.py bob 5672 SELL 100 11.00
+[bob] Sent SELL 100 XYZ @ 11 as bob
+[exchange] ORDER  bob SELL 100 XYZ @ 11
+[exchange] BOOK   XYZ {"bids":["alice@10.5"],"asks":["bob@11"]}
+PASS - SELL above best BUY does not trade
+$ carol: python task2-trading/send_order.py carol 5672 SELL 100 10.00
+[carol] Sent SELL 100 XYZ @ 10 as carol
+[exchange] ORDER  carol SELL 100 XYZ @ 10
+[exchange] TRADE  #1 XYZ 100 @ 10.5 (buyer alice, seller carol)
+[trades topic] {"type":"trade","tradeId":1,"symbol":"XYZ","price":10.5,"quantity":100,"buyer":"alice","seller":"carol","buyOrderId":"alice-1792402375269-19200","sellOrderId":"carol-1792402378036-23156","ts":"2026-10-19T09:32:58.082Z"}
+PASS - SELL below BUY price produces one trade
+PASS - trade price is the resting (buyer) price 10.5, buyer=alice, seller=carol
+$ dave: python task2-trading/send_order.py dave 5672 BUY 100 11.50
+[dave] Sent BUY 100 XYZ @ 11.5 as dave
+[exchange] ORDER  dave BUY 100 XYZ @ 11.5
+[exchange] TRADE  #2 XYZ 100 @ 11 (buyer dave, seller bob)
+[trades topic] {"type":"trade","tradeId":2,"symbol":"XYZ","price":11.0,"quantity":100,"buyer":"dave","seller":"bob","buyOrderId":"dave-1792402379682-23508","sellOrderId":"bob-1792402376490-15528","ts":"2026-10-19T09:32:59.729Z"}
+PASS - BUY above resting SELL (bob @ 11) trades at 11
+$ bad-qty: python task2-trading/send_order.py eve 5672 BUY 50 10
+[bad-qty] QUANTITY is fixed at 100 for this assignment
+[bad-qty] Usage: python task2-trading/send_order.py <username> <endpoint> <BUY|SELL> <quantity=100> <price> [stock]
+PASS - quantity other than 100 is rejected
+$ f1: python task2-trading/send_order.py frank 5672 BUY 100 5.00 ABC
+[f1] Sent BUY 100 ABC @ 5 as frank
+[exchange] ORDER  frank BUY 100 ABC @ 5
+[exchange] BOOK   ABC {"bids":["frank@5"],"asks":[]}
+$ g1: python task2-trading/send_order.py gina 5672 SELL 100 5.00 ABC
+[g1] Sent SELL 100 ABC @ 5 as gina
+[exchange] ORDER  gina SELL 100 ABC @ 5
+[exchange] TRADE  #3 ABC 100 @ 5 (buyer frank, seller gina)
+[trades topic] {"type":"trade","tradeId":3,"symbol":"ABC","price":5.0,"quantity":100,"buyer":"frank","seller":"gina","buyOrderId":"frank-1792402382189-24480","sellOrderId":"gina-1792402383269-21952","ts":"2026-10-19T09:33:03.322Z"}
+PASS - multi-stock: ABC order pair trades independently of XYZ
+
+RESULT: 10/10 checks passed
