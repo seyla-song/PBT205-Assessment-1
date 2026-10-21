@@ -1,0 +1,17 @@
+# Python virtual environment (rebuild with: pip install -r requirements.txt)
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# IDE settings (PyCharm / VS Code)
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
