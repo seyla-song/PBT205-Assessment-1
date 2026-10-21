@@ -11,5 +11,3 @@ venv/
 .vscode/
 .DS_Store
 
-# Assessment brief (university material, not part of the code)
-*.pdf
