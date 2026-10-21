@@ -26,19 +26,35 @@ Leave this terminal open. RabbitMQ is ready when the log shows `Server startup c
 
 ## 2. Install dependencies
 
-In a new terminal, from the project folder:
+In a new terminal, go to the project folder, create a virtual environment and install `pika` into it (only needed once):
 
 ```bash
+cd path/to/task1
 python3 -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+venv/bin/pip install -r requirements.txt
 ```
+
+On Windows:
+
+```bat
+cd path\to\task1
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt
+```
+
+> `pika` is installed inside `venv`, so run the app with the venv's Python (`venv/bin/python`).
+> There is no need to activate the venv. If you do activate it (`source venv/bin/activate`,
+> Windows: `venv\Scripts\activate`), you can type `python` instead of `venv/bin/python`.
 
 ## 3. Run the chat app
 
+From the project folder:
+
 ```bash
-python chat.py <username> <port> [room]
+venv/bin/python chat.py <username> <port> [room]
 ```
+
+On Windows use `venv\Scripts\python chat.py <username> <port> [room]`.
 
 | Argument   | Required | Description                                                   |
 |------------|----------|---------------------------------------------------------------|
@@ -49,25 +65,25 @@ python chat.py <username> <port> [room]
 Examples:
 
 ```bash
-python chat.py seyla 5672 general
-python chat.py alex 5672           # asks which room to join
+venv/bin/python chat.py seyla 5672 general
+venv/bin/python chat.py seyla 5672 general
 ```
 
 Type a message and press **Enter** to send it. Press **Ctrl+C** to leave.
 
 ## 4. Try it with several users
 
-Open three terminals (activate the venv in each one) and run:
+Keep RabbitMQ running, then open three more terminals in the project folder and run:
 
 ```bash
 # Terminal A
-python chat.py alice 5672 general
+venv/bin/python chat.py alice 5672 general
 
 # Terminal B
-python chat.py bob 5672 general
+venv/bin/python chat.py bob 5672 general
 
 # Terminal C
-python chat.py carol 5672 sport
+venv/bin/python chat.py carol 5672 sport
 ```
 
 - Messages from Alice appear for Bob, and the other way round.
@@ -107,4 +123,5 @@ You can watch the exchange and queues live in the management UI (**Exchanges →
 |---------|-----|
 | `could not connect to RabbitMQ on localhost:5672` | RabbitMQ isn't running. Start it with the Docker command in step 1 |
 | `port is already allocated` when starting Docker | Something else is using port 5672 (see the note in step 1) |
-| `ModuleNotFoundError: No module named 'pika'` | Activate the venv and run `pip install -r requirements.txt` |
+| `ModuleNotFoundError: No module named 'pika'` | You ran the system `python`. Run `venv/bin/pip install -r requirements.txt`, then start the app with `venv/bin/python chat.py ...` |
+| `No such file or directory: venv/bin/python` | You are not in the project folder, or the venv hasn't been created. `cd` into the project and do step 2 |
